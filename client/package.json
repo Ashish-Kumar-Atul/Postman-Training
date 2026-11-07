@@ -1,0 +1,9 @@
+{
+  "name": "crud-training-client",
+  "version": "1.0.0",
+  "description": "Frontend website for the Postman CRUD training app",
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "license": "MIT"
+}

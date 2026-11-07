@@ -1,0 +1,13 @@
+{
+  "name": "postman-crud-training",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CRUD training app: client (website) + server (REST API)",
+  "scripts": {
+    "install-all": "npm install --prefix server",
+    "start": "node start.js",
+    "server": "npm start --prefix server",
+    "client": "npm start --prefix client"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "CRUD Training - Products API",
+    "description": "Practice collection for the Product Manager training app. Start the server with `npm start`, then run these requests top to bottom. The Create request saves the new product's id into the {{productId}} collection variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5050" },
+    { "key": "productId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "0. Health check",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('API is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+      ] } }]
+    },
+    {
+      "name": "1. Create product (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"USB-C Cable\",\n  \"price\": 349,\n  \"category\": \"Electronics\",\n  \"inStock\": true,\n  \"description\": \"1 metre, braided\"\n}" },
+        "url": "{{baseUrl}}/api/products"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+        "const body = pm.response.json();",
+        "pm.test('Has an id', () => pm.expect(body.id).to.be.a('number'));",
+        "pm.test('Name matches', () => pm.expect(body.name).to.eql('USB-C Cable'));",
+        "pm.collectionVariables.set('productId', body.id);",
+        "console.log('Saved productId =', body.id);"
+      ] } }]
+    },
+    {
+      "name": "2. Get all products (GET)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/products" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('data is an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "3. Get products with query params (GET)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/products?category=Electronics&sort=price&order=desc&page=1&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products"],
+          "query": [
+            { "key": "category", "value": "Electronics" },
+            { "key": "sort", "value": "price" },
+            { "key": "order", "value": "desc" },
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "10" },
+            { "key": "search", "value": "mouse", "disabled": true },
+            { "key": "inStock", "value": "true", "disabled": true }
+          ]
+        }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('All results are Electronics', () => {",
+        "  pm.response.json().data.forEach(p => pm.expect(p.category).to.eql('Electronics'));",
+        "});"
+      ] } }]
+    },
+    {
+      "name": "4. Get one product (GET by id)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/products/{{productId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('Correct id returned', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('productId'))));"
+      ] } }]
+    },
+    {
+      "name": "5. Replace product (PUT)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"USB-C Cable (2m)\",\n  \"price\": 449,\n  \"category\": \"Electronics\",\n  \"inStock\": true,\n  \"description\": \"2 metre, braided\"\n}" },
+        "url": "{{baseUrl}}/api/products/{{productId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('Price updated', () => pm.expect(pm.response.json().price).to.eql(449));"
+      ] } }]
+    },
+    {
+      "name": "6. Update some fields (PATCH)",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"inStock\": false\n}" },
+        "url": "{{baseUrl}}/api/products/{{productId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+        "pm.test('Now out of stock', () => pm.expect(pm.response.json().inStock).to.be.false);",
+        "pm.test('Other fields unchanged', () => pm.expect(pm.response.json().name).to.eql('USB-C Cable (2m)'));"
+      ] } }]
+    },
+    {
+      "name": "7. Delete product (DELETE)",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/api/products/{{productId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+      ] } }]
+    },
+    {
+      "name": "8. Confirm deleted (expect 404)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/products/{{productId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+      ] } }]
+    },
+    {
+      "name": "Error cases",
+      "item": [
+        {
+          "name": "POST missing required fields (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"\"\n}" },
+            "url": "{{baseUrl}}/api/products"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+            "pm.test('Has validation details', () => pm.expect(pm.response.json().details).to.be.an('array').that.is.not.empty);"
+          ] } }]
+        },
+        {
+          "name": "POST wrong data type (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Pen\",\n  \"price\": \"ten\",\n  \"category\": \"Stationery\"\n}" },
+            "url": "{{baseUrl}}/api/products"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        },
+        {
+          "name": "POST malformed JSON (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Pen\", }" },
+            "url": "{{baseUrl}}/api/products"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        },
+        {
+          "name": "GET non-existent id (404)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/products/99999" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+          ] } }]
+        },
+        {
+          "name": "GET invalid id (400)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/products/abc" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Reset sample data",
+      "request": { "method": "POST", "url": "{{baseUrl}}/api/reset" }
+    }
+  ]
+}

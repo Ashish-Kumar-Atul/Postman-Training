@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Manager — CRUD Training</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Product Manager</h1>
+      <p class="sub">A CRUD playground for practicing Postman. Every action below is a real REST call — watch the log on the right.</p>
+    </div>
+    <button id="resetBtn" class="ghost" title="POST /api/reset">Reset sample data</button>
+  </header>
+
+  <main>
+    <section class="left">
+      <div class="card">
+        <h2 id="formTitle">Add product <span class="pill post">POST</span></h2>
+        <form id="productForm" autocomplete="off">
+          <input type="hidden" id="productId" />
+          <div class="grid">
+            <label>Name<input id="name" required placeholder="e.g. USB Cable" /></label>
+            <label>Price (₹)<input id="price" type="number" min="0" step="0.01" required placeholder="199" /></label>
+            <label>Category<input id="category" required placeholder="Electronics" list="categories" /></label>
+            <label class="check"><input id="inStock" type="checkbox" checked /> In stock</label>
+          </div>
+          <label>Description<textarea id="description" rows="2" placeholder="Optional"></textarea></label>
+          <div class="actions">
+            <button type="submit" id="submitBtn">Create product</button>
+            <button type="button" id="cancelBtn" class="ghost" hidden>Cancel edit</button>
+          </div>
+        </form>
+        <datalist id="categories"></datalist>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <h2>Products <span class="pill get">GET</span> <span id="count" class="muted"></span></h2>
+          <div class="filters">
+            <input id="search" placeholder="Search…" />
+            <select id="filterCategory"><option value="">All categories</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <p id="empty" class="muted" hidden>No products found.</p>
+      </div>
+    </section>
+
+    <aside class="card log">
+      <div class="toolbar">
+        <h2>API request log</h2>
+        <button id="clearLog" class="ghost small">Clear</button>
+      </div>
+      <p class="muted small">Recreate any of these in Postman using the same method, URL and JSON body.</p>
+      <ol id="log"></ol>
+    </aside>
+  </main>
+
+  <div id="toast" role="status"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
