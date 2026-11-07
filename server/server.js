@@ -29,9 +29,18 @@ function loadDb() {
     return seedDb();
   }
 }
+// Locally, data is saved to data/db.json. On Vercel the filesystem is read-only,
+// so saving fails and data is kept in memory instead (it resets when Vercel restarts the server).
+let canWriteFile = true;
 function saveDb(db) {
-  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  if (!canWriteFile) return;
+  try {
+    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  } catch (err) {
+    canWriteFile = false;
+    console.warn(`Cannot write ${DB_FILE} (${err.code}). Keeping data in memory only.`);
+  }
 }
 let db = loadDb();
 
@@ -204,6 +213,11 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Not Found', message: `Cannot ${req.method} ${req.originalUrl}` });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  [server] API running at http://localhost:${PORT}/api/products\n`);
-});
+// Run a normal server locally (`npm start`). On Vercel, the exported app is used instead.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n  [server] API running at http://localhost:${PORT}/api/products\n`);
+  });
+}
+
+module.exports = app;
