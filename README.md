@@ -2,11 +2,20 @@
 
 A small website (frontend + REST API) for practicing CRUD operations in Postman.
 
+## Live links
+
+| | URL |
+|---|---|
+| Website | https://postman-training-client.vercel.app |
+| API (use in Postman) | https://postman-training-zkkv.vercel.app/api/products |
+
+See [API-ENDPOINTS.md](API-ENDPOINTS.md) for every endpoint with example bodies.
+
 ## Project structure
 
 ```
 client/    Frontend website (HTML/CSS/JS). Runs on port 3000.
-  config.js  API URL the website calls (default http://localhost:5050)
+  config.js  API URL the website calls (local server on localhost, deployed API elsewhere)
   serve.js   Small static file server
 server/    Backend REST API (Node + Express). Runs on port 5050.
   server.js
@@ -14,7 +23,7 @@ postman/   Postman collection to import
 start.js   Starts client and server together
 ```
 
-## Run it
+## Run it locally
 
 One-time setup:
 
@@ -36,11 +45,11 @@ npm run client     # terminal 2: website on http://localhost:3000
 ```
 
 - Website: http://localhost:3000
-- API (use this in Postman): http://localhost:5050/api/products
+- API: http://localhost:5050/api/products (set Postman's `baseUrl` to `http://localhost:5050` to use it)
 
-Data is saved to `server/data/db.json`, so it survives restarts. To restore the sample products, click **Reset sample data** on the website or send `POST /api/reset`.
+Locally, data is saved to `server/data/db.json`, so it survives restarts. On Vercel, data is kept in memory and may reset to the sample products. To restore the sample products, click **Reset sample data** on the website or send `POST /api/reset`.
 
-> **Sharing with interns on the same Wi-Fi:** find your IP (`ipconfig getifaddr en0` on macOS) and have them use `http://<your-ip>:3000` for the website and `http://<your-ip>:5050` in Postman. Also set `window.API_BASE` in `client/config.js` to `http://<your-ip>:5050`. Note that everyone then shares the same data.
+> **Sharing with interns on the same Wi-Fi:** find your IP (`ipconfig getifaddr en0` on macOS) and have them use `http://<your-ip>:3000` for the website and `http://<your-ip>:5050` in Postman. Also set `LOCAL_API` in `client/config.js` to `http://<your-ip>:5050` and add your IP to the `isLocal` list. Note that everyone then shares the same data.
 
 ## API reference
 
@@ -84,7 +93,7 @@ Import `postman/CRUD-Training.postman_collection.json` into Postman (**Import â†
 - An **Error cases** folder with 400 and 404 examples.
 - A test script on every request. Run the whole collection with **Run collection** to see them pass.
 
-The `{{baseUrl}}` variable defaults to `http://localhost:5050`.
+The `{{baseUrl}}` variable defaults to the deployed API, `https://postman-training-zkkv.vercel.app`. Change it to `http://localhost:5050` to test against a local server.
 
 ## Suggested intern exercises
 
