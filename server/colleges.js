@@ -2,7 +2,26 @@ const express = require('express');
 const SEED = require('./colleges-seed.json');
 
 const KEYS = Object.keys(SEED);
-const REQUIRED = ['name', 'code'];
+const REQUIRED = ['name', 'code', 'email', 'city', 'state', 'type']; // must be sent as non-empty strings on POST and PUT
+// required fields inside each item of these lists: [field, 'string' | 'number']
+const ITEM_REQUIRED = {
+  courses: [['name', 'string'], ['code', 'string'], ['level', 'string'], ['durationYears', 'number']],
+  fees: [['courseCode', 'string'], ['currency', 'string']],
+  faqs: [['question', 'string'], ['answer', 'string']],
+};
+function itemErrors(field, items, only) {
+  const errs = [];
+  items.forEach((it, i) => {
+    if (!it || typeof it !== 'object' || Array.isArray(it)) { errs.push(`${field}[${i}] must be an object`); return; }
+    for (const [k, t] of ITEM_REQUIRED[field]) {
+      if (only && !only(it, k)) continue;
+      const v = it[k];
+      const ok = t === 'string' ? typeof v === 'string' && v.trim() : typeof v === 'number' && Number.isFinite(v);
+      if (!ok) errs.push(`${field}[${i}] "${k}" is required and must be ${t === 'string' ? 'a non-empty string' : 'a number'}`);
+    }
+  });
+  return errs;
+}
 const kind = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 
 // full college record: every key from the seed, defaults filled in, server-managed fields on top
@@ -38,6 +57,7 @@ function validate(body, { partial }) {
     const got = kind(body[k]);
     if (got !== want && !(got === 'null' && want !== 'object')) errors.push(`"${k}" must be of type ${want}`);
   }
+  for (const f of Object.keys(ITEM_REQUIRED)) if (Array.isArray(body[f])) errors.push(...itemErrors(f, body[f]));
   if (partial && !KEYS.some((k) => body[k] !== undefined)) errors.push('PATCH body must contain at least one known field');
   return errors;
 }
@@ -143,20 +163,12 @@ module.exports = function collegesRouter(getDb, saveDb) {
   //                                      matching item, or adds it if it does not exist yet
   const SUB = { courses: 'code', fees: 'courseCode' };
   for (const [field, key] of Object.entries(SUB)) {
-    const itemErrors = (items) => {
-      const errs = [];
-      items.forEach((it, i) => {
-        if (!it || typeof it !== 'object' || Array.isArray(it)) errs.push(`[${i}] must be an object`);
-        else if (typeof it[key] !== 'string' || !it[key].trim()) errs.push(`[${i}] "${key}" is required and must be a non-empty string`);
-      });
-      return errs;
-    };
     r.put(`/:id/${field}`, (req, res) => {
       const db = ensure();
       const idx = locate(req, res, db);
       if (idx === -1) return;
       if (!Array.isArray(req.body)) return res.status(400).json({ error: 'Validation Failed', details: [`Request body must be a JSON array of ${field}`] });
-      const errors = itemErrors(req.body);
+      const errors = itemErrors(field, req.body);
       if (errors.length) return res.status(400).json({ error: 'Validation Failed', details: errors });
       db.colleges[idx] = { ...db.colleges[idx], [field]: req.body, updatedAt: new Date().toISOString() };
       saveDb(db);
@@ -167,9 +179,10 @@ module.exports = function collegesRouter(getDb, saveDb) {
       const idx = locate(req, res, db);
       if (idx === -1) return;
       const items = Array.isArray(req.body) ? req.body : [req.body];
-      const errors = itemErrors(items);
-      if (errors.length) return res.status(400).json({ error: 'Validation Failed', details: errors });
       const list = [...(db.colleges[idx][field] || [])];
+      // existing items only need their key; brand-new items need every required field
+      const errors = itemErrors(field, items, (it, k) => k === key || !list.some((x) => x[key] === it[key]));
+      if (errors.length) return res.status(400).json({ error: 'Validation Failed', details: errors });
       for (const it of items) {
         const at = list.findIndex((x) => x[key] === it[key]);
         if (at === -1) list.push(it); else list[at] = { ...list[at], ...it };
