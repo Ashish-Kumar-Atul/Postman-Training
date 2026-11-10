@@ -55,6 +55,9 @@
     { "name": "MCA", "code": "MCA", "description": "Master of Computer Applications.", "durationYears": 2, "approvedIntake": null, "lateralEntry": true, "nbaAccreditation": "NBA Accredited", "level": "POST_GRADUATE" },
     { "name": "B.Pharm", "code": "BPHARM", "description": "Bachelor of Pharmacy.", "durationYears": 4, "approvedIntake": null, "lateralEntry": true, "nbaAccreditation": "NBA Accredited", "level": "UNDER_GRADUATE" }
   ],
+  "fees": [
+    { "courseCode": "BTECH-CSE", "currency": "INR", "tuitionPerYear": null, "otherChargesPerYear": null, "totalFee": null }
+  ],
   "placement": {
     "averagePackage": null,
     "highestPackage": null,

@@ -136,6 +136,50 @@ module.exports = function collegesRouter(getDb, saveDb) {
     res.json(db.colleges[idx]);
   });
 
+  // PUT / PATCH a college's courses or fees
+  //   PUT   /:id/courses | /:id/fees  -> body is an array; replaces the whole list
+  //   PATCH /:id/courses | /:id/fees  -> body is an object (or array of objects) with the item key
+  //                                      ("code" for courses, "courseCode" for fees); merges into the
+  //                                      matching item, or adds it if it does not exist yet
+  const SUB = { courses: 'code', fees: 'courseCode' };
+  for (const [field, key] of Object.entries(SUB)) {
+    const itemErrors = (items) => {
+      const errs = [];
+      items.forEach((it, i) => {
+        if (!it || typeof it !== 'object' || Array.isArray(it)) errs.push(`[${i}] must be an object`);
+        else if (typeof it[key] !== 'string' || !it[key].trim()) errs.push(`[${i}] "${key}" is required and must be a non-empty string`);
+      });
+      return errs;
+    };
+    r.put(`/:id/${field}`, (req, res) => {
+      const db = ensure();
+      const idx = locate(req, res, db);
+      if (idx === -1) return;
+      if (!Array.isArray(req.body)) return res.status(400).json({ error: 'Validation Failed', details: [`Request body must be a JSON array of ${field}`] });
+      const errors = itemErrors(req.body);
+      if (errors.length) return res.status(400).json({ error: 'Validation Failed', details: errors });
+      db.colleges[idx] = { ...db.colleges[idx], [field]: req.body, updatedAt: new Date().toISOString() };
+      saveDb(db);
+      res.json(db.colleges[idx]);
+    });
+    r.patch(`/:id/${field}`, (req, res) => {
+      const db = ensure();
+      const idx = locate(req, res, db);
+      if (idx === -1) return;
+      const items = Array.isArray(req.body) ? req.body : [req.body];
+      const errors = itemErrors(items);
+      if (errors.length) return res.status(400).json({ error: 'Validation Failed', details: errors });
+      const list = [...(db.colleges[idx][field] || [])];
+      for (const it of items) {
+        const at = list.findIndex((x) => x[key] === it[key]);
+        if (at === -1) list.push(it); else list[at] = { ...list[at], ...it };
+      }
+      db.colleges[idx] = { ...db.colleges[idx], [field]: list, updatedAt: new Date().toISOString() };
+      saveDb(db);
+      res.json(db.colleges[idx]);
+    });
+  }
+
   // DELETE one
   r.delete('/:id', (req, res) => {
     const db = ensure();
