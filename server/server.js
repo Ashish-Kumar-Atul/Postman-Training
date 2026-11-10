@@ -208,6 +208,8 @@ app.post('/api/reset', (req, res) => {
   res.json({ message: 'Database reset to sample data', total: db.products.length });
 });
 
+app.use('/api/colleges', require('./colleges')(() => db, saveDb));
+
 // unknown API route
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Not Found', message: `Cannot ${req.method} ${req.originalUrl}` });
